@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtualenv
+venv/
+ENV/
+.env/
+.venv/
+
+# VSCode
+.vscode/
+
+# Arquivo de variáveis de ambiente
+.env
+
+# Arquivos temporários
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Outros
+*.sqlite3
+*.db 
