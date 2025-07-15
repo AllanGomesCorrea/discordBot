@@ -31,7 +31,7 @@ class ExcelExportView(View):
         )
         self.stop()
 
-@app_commands.command(name="resultado", description="Mostra o resultado das contas.")
+@app_commands.command(name="summary", description="Mostra o resultado das contas.")
 async def summary(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
     channel = interaction.channel

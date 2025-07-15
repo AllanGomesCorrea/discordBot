@@ -48,14 +48,14 @@ python main.py
 ## 5. Comandos disponíveis
 
 ### Gastos
-- `/resultado` — Mostra os gastos agrupados por pessoa e permite exportar para Excel.
+- `/summary` — Mostra os gastos agrupados por pessoa e permite exportar para Excel.
 - `/total_splited` — Mostra o total por pessoa e quem deve para quem.
 
 ### Música
 - `/add_song <url>` — Adiciona uma música do YouTube à fila e começa a tocar.
 - `/play_pause` — Alterna entre tocar e pausar a música atual.
 - `/skip` — Pula para a próxima música da fila.
-- `/fila` — Mostra a fila de músicas.
+- `/queue` — Mostra a fila de músicas.
 - `/exit` — Remove o bot do canal de voz e limpa a fila.
 
 ### Outros
@@ -67,4 +67,11 @@ python main.py
 
 ---
 
-Se tiver dúvidas, consulte o código ou abra uma issue! 
+Se tiver dúvidas, consulte o código ou abra uma issue!
+
+---
+
+## Autor
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/allancorrea/)
+[![GitHub](https://img.shields.io/badge/GitHub-black?logo=github&logoColor=white)](https://github.com/AllanGomesCorrea) 

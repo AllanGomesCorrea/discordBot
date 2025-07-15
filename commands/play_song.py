@@ -53,7 +53,7 @@ class MusicPlayerView(View):
         self.voice_client.stop()
         await interaction.response.defer()
 
-    @discord.ui.button(label="📃 Fila", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="📃 Queue", style=discord.ButtonStyle.secondary)
     async def show_queue(self, interaction: discord.Interaction, button: Button):
         if self.queue:
             queue_titles = [title for _, title, _ in self.queue]
@@ -148,8 +148,8 @@ async def skip(interaction: discord.Interaction):
     vc.stop()
     await interaction.response.send_message("Pulando para a próxima música...", ephemeral=True)
 
-@app_commands.command(name="fila", description="Mostra a fila de músicas.")
-async def fila(interaction: discord.Interaction):
+@app_commands.command(name="queue", description="Mostra a fila de músicas.")
+async def queue(interaction: discord.Interaction):
     queue = get_song_queue(interaction.guild.id)
     if queue:
         queue_titles = [title for _, title, _ in queue]
