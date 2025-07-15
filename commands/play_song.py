@@ -23,9 +23,10 @@ def get_song_history(guild_id):
 
 async def get_audio_url(youtube_url):
     ydl_opts = {
-        'format': 'bestaudio[ext=opus]/bestaudio[ext=webm]/bestaudio/best',
-        'quiet': True,
+        'format': 'bestaudio[abr<=96]/bestaudio','quiet': True,
         'noplaylist': True,
+        'youtube_include_dash_manifest': False,
+        'youtube_include_hls_manifest': False,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(youtube_url, download=False)
@@ -100,7 +101,13 @@ async def play_next_song(interaction, vc, queue, history, loop):
     # Re-extraia o link de áudio imediatamente antes de tocar
     audio_url, _ = await get_audio_url(url)
     history.append((title, url))
-    source = await discord.FFmpegOpusAudio.from_probe(audio_url)
+    
+    ffmpeg_options = {
+        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+        'options': '-vn -c:a libopus -b:a 96k',
+    }
+    
+    source = await discord.FFmpegOpusAudio.from_probe(audio_url, **ffmpeg_options)
 
     def after_playing(error):
         fut = asyncio.run_coroutine_threadsafe(
