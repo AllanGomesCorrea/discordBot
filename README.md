@@ -1,77 +1,155 @@
-# Bot Discord
+# Bot Discord - Gastos
 
-## 1. Configuração Inicial no Discord Developer Portal
+Bot Discord para gerenciamento de gastos compartilhados com funcionalidades de cálculo de divisão de contas e persistência em banco de dados SQLite.
 
-1. Acesse o [Discord Developer Portal](https://discord.com/developers/applications).
-2. Clique em "New Application" e dê um nome ao seu bot.
-3. No menu lateral, vá em "Bot" e clique em "Add Bot".
-4. Copie o **Token** do bot (você vai usar no .env).
-5. Em "Privileged Gateway Intents", ative:
-   - Presence Intent
-   - Server Members Intent
-   - Message Content Intent
-6. Em "OAuth2" > "URL Generator":
-   - Marque os scopes: `bot`
-   - Em "Bot Permissions", marque:
-     - `Administrator`
-   - Copie o link gerado e use para adicionar o bot ao seu servidor.
+## Funcionalidades
 
-## 2. Crie o arquivo `.env`
+### Comandos Básicos
+- `/hello` - Comando de teste
+- `/summary` - Mostra resumo das despesas do canal
+- `/total_splited` - Calcula divisão de gastos e quem deve para quem
 
-Na raiz do projeto, crie um arquivo chamado `.env` com o conteúdo:
+### Comandos de Música
+- `/add_song` - Adiciona música à fila
+- `/play_pause` - Reproduz/pausa música
+- `/skip` - Pula música atual
+- `/queue` - Mostra fila de músicas
+- `/exit` - Sai do canal de voz
 
+### Comandos de Persistência (NOVO)
+- `/save_monthly <mês> <ano>` - Salva dados mensais no banco SQLite
+- `/load_monthly <mês> <ano>` - Carrega dados salvos de um mês específico
+
+## Arquitetura
+
+O projeto segue os princípios SOLID e Clean Code:
+
+### Estrutura de Pastas
 ```
-BOT_TOKEN=SEU_TOKEN_AQUI
+├── commands/          # Comandos do Discord
+├── models/           # Modelos de dados
+├── repositories/     # Interfaces e implementações de repositório
+├── services/         # Lógica de negócio
+├── config.py         # Configurações centralizadas
+├── main.py          # Ponto de entrada
+└── requirements.txt  # Dependências
 ```
 
-Substitua `SEU_TOKEN_AQUI` pelo token copiado do portal do Discord.
+### Princípios SOLID Aplicados
 
-## 3. Instale as dependências
+1. **Single Responsibility Principle (SRP)**
+   - Cada classe tem uma única responsabilidade
+   - Repositórios apenas gerenciam dados
+   - Serviços contêm lógica de negócio
+   - Comandos apenas orquestram interações
 
-Com o Python 3.11+ e o virtualenv ativado, execute:
+2. **Open/Closed Principle (OCP)**
+   - Interfaces de repositório permitem extensão
+   - Novos tipos de repositório podem ser implementados
 
+3. **Liskov Substitution Principle (LSP)**
+   - Implementações de repositório são intercambiáveis
+   - SQLiteExpenseRepository pode substituir ExpenseRepository
+
+4. **Interface Segregation Principle (ISP)**
+   - Interfaces específicas para cada tipo de repositório
+   - Clientes não dependem de métodos não utilizados
+
+5. **Dependency Inversion Principle (DIP)**
+   - Serviços dependem de abstrações (interfaces)
+   - Injeção de dependência nos construtores
+
+## Banco de Dados
+
+### Schema SQLite
+
+#### Tabela `expenses`
+```sql
+CREATE TABLE expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    value REAL NOT NULL,
+    description TEXT NOT NULL,
+    paid_by TEXT NOT NULL,
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Tabela `splits`
+```sql
+CREATE TABLE splits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    debtor TEXT NOT NULL,
+    creditor TEXT NOT NULL,
+    amount REAL NOT NULL,
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Configuração
+
+### Variáveis de Ambiente
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+BOT_TOKEN=seu_token_do_discord
+DATABASE_PATH=expenses.db
+LOG_LEVEL=INFO
+MAX_MESSAGE_HISTORY=500
+```
+
+### Instalação
 ```bash
 pip install -r requirements.txt
 ```
 
-Além disso, instale o **ffmpeg** no seu sistema:
-- **macOS:** `brew install ffmpeg`
-- **Ubuntu/Debian:** `sudo apt install ffmpeg`
-- **Windows:** [Baixe aqui](https://ffmpeg.org/download.html) e adicione ao PATH
-
-## 4. Execute o bot
-
+### Execução
 ```bash
 python main.py
 ```
 
-## 5. Comandos disponíveis
+## Uso
 
-### Gastos
-- `/summary` — Mostra os gastos agrupados por pessoa e permite exportar para Excel.
-- `/total_splited` — Mostra o total por pessoa e quem deve para quem.
+### Formato de Mensagens
+Para que o bot reconheça as despesas, use o formato:
+```
+- 25.50;Almoço;João
+- 15.00;Uber;Maria
+- 8.75;Café;Pedro
+```
 
-### Música
-- `/add_song <url>` — Adiciona uma música do YouTube à fila e começa a tocar.
-- `/play_pause` — Alterna entre tocar e pausar a música atual.
-- `/skip` — Pula para a próxima música da fila.
-- `/queue` — Mostra a fila de músicas.
-- `/exit` — Remove o bot do canal de voz e limpa a fila.
+### Comandos de Persistência
 
-### Outros
-- `/hello` — Mensagem de boas-vindas.
+#### Salvar Dados Mensais
+```
+/save_monthly 12 2024
+```
+- Analisa mensagens do canal
+- Calcula divisão de gastos
+- Salva no banco SQLite
+- Sobrescreve dados existentes do mesmo mês/ano
 
-## 6. Observações
-- O bot precisa de permissões de "Conectar" e "Falar" no canal de voz.
-- O bot funciona em múltiplos servidores, cada um com sua própria fila de músicas.
+#### Carregar Dados Salvos
+```
+/load_monthly 12 2024
+```
+- Carrega dados salvos do mês/ano especificado
+- Mostra resumo completo com splits
 
----
+## Exemplo de Fluxo
 
-Se tiver dúvidas, consulte o código ou abra uma issue!
+1. Usuários enviam mensagens com gastos no canal
+2. Comando `/save_monthly 12 2024` salva dados de dezembro/2024
+3. Comando `/load_monthly 12 2024` recupera dados salvos
+4. Dados persistem entre sessões do bot
 
----
+## Tecnologias
 
-## Autor
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/allancorrea/)
-[![GitHub](https://img.shields.io/badge/GitHub-black?logo=github&logoColor=white)](https://github.com/AllanGomesCorrea) 
+- **Discord.py** - API do Discord
+- **SQLite** - Banco de dados local
+- **aiosqlite** - Interface assíncrona para SQLite
+- **openpyxl** - Geração de planilhas Excel
+- **python-dotenv** - Gerenciamento de variáveis de ambiente

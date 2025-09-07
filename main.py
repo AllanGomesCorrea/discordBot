@@ -1,11 +1,10 @@
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import os
+from config import BOT_TOKEN
 from commands import register_commands
 
 load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -21,4 +20,9 @@ async def on_ready():
 
 register_commands(bot)
 
-bot.run(BOT_TOKEN)
+if __name__ == "__main__":
+    if not BOT_TOKEN:
+        print("Erro: BOT_TOKEN não encontrado nas variáveis de ambiente.")
+        exit(1)
+    
+    bot.run(BOT_TOKEN)
