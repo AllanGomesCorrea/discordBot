@@ -3,14 +3,10 @@ from discord import app_commands
 from datetime import datetime
 from typing import List, Tuple
 from services.expense_service import ExpenseService
+from services.calculation_service import CalculationService
 from repositories.sqlite_expense_repository import SQLiteExpenseRepository
 from repositories.sqlite_split_repository import SQLiteSplitRepository
 from config import DATABASE_PATH, MAX_MESSAGE_HISTORY
-
-# Inicializar repositórios e serviço
-expense_repo = SQLiteExpenseRepository(DATABASE_PATH)
-split_repo = SQLiteSplitRepository(DATABASE_PATH)
-expense_service = ExpenseService(expense_repo, split_repo)
 
 @app_commands.command(name="save_monthly", description="Salva o resumo mensal no banco de dados.")
 async def save_monthly(interaction: discord.Interaction, month: int, year: int):
@@ -52,29 +48,17 @@ async def save_monthly(interaction: discord.Interaction, month: int, year: int):
             await interaction.followup.send("Nenhum gasto encontrado no padrão esperado (- Valor;Descrição;Pessoa)", ephemeral=True)
             return
         
+        # Inicializar repositórios e serviço dentro da função
+        expense_repo = SQLiteExpenseRepository(DATABASE_PATH)
+        split_repo = SQLiteSplitRepository(DATABASE_PATH)
+        expense_service = ExpenseService(expense_repo, split_repo)
+        
         # Salvar no banco de dados
         await expense_service.save_monthly_data(expenses_data, month, year)
         
-        # Calcular estatísticas para feedback
-        total_by_person = {}
-        for value, _, person in expenses_data:
-            total_by_person[person] = total_by_person.get(person, 0) + value
-        
-        total_sum = sum(total_by_person.values())
-        people_count = len(total_by_person)
-        average = total_sum / people_count
-        
-        # Gerar mensagem de confirmação
-        summary_text = f"**Dados salvos para {month:02d}/{year}:**\n\n"
-        summary_text += f"**Total de gastos:** R$ {total_sum:.2f}\n"
-        summary_text += f"**Pessoas envolvidas:** {people_count}\n"
-        summary_text += f"**Média por pessoa:** R$ {average:.2f}\n\n"
-        
-        summary_text += "**Gastos por pessoa:**\n"
-        for person, total in sorted(total_by_person.items()):
-            balance = total - average
-            status = "recebe" if balance > 0 else "deve"
-            summary_text += f"{person}: R$ {total:.2f} ({status} R$ {abs(balance):.2f})\n"
+        # Usar o serviço de cálculos para feedback
+        calculation = CalculationService.calculate_expenses(expenses_data)
+        summary_text = CalculationService.format_summary_text(calculation, month, year, "Dados salvos para")
         
         await interaction.followup.send(summary_text, ephemeral=True)
         

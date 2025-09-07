@@ -4,6 +4,7 @@ from models.expense import Expense
 from models.split import Split
 from repositories.expense_repository import ExpenseRepository
 from repositories.split_repository import SplitRepository
+from services.calculation_service import CalculationService
 
 class ExpenseService:
     def __init__(self, expense_repository: ExpenseRepository, split_repository: SplitRepository):
@@ -35,48 +36,28 @@ class ExpenseService:
         # Salvar despesas
         await self.expense_repository.save_expenses(expenses)
         
-        # Calcular e salvar splits
+        # Calcular e salvar splits usando o CalculationService
         splits = self._calculate_splits(expenses_data, month, year)
         await self.split_repository.save_splits(splits)
     
     def _calculate_splits(self, expenses_data: List[Tuple[float, str, str]], month: int, year: int) -> List[Split]:
         """
-        Calcula quem deve para quem baseado nas despesas.
+        Calcula quem deve para quem baseado nas despesas usando o CalculationService.
         """
-        # Calcular total por pessoa
-        total_by_person = {}
-        for value, _, paid_by in expenses_data:
-            total_by_person[paid_by] = total_by_person.get(paid_by, 0) + value
+        # Usar o CalculationService para obter os cálculos
+        calculation = CalculationService.calculate_expenses(expenses_data)
         
-        people = list(total_by_person.keys())
-        total_sum = sum(total_by_person.values())
-        average_expense = total_sum / len(people)
-        
-        # Calcular balanço por pessoa
-        balance_by_person = {person: total_by_person[person] - average_expense for person in people}
-        
-        # Separar devedores e credores
-        debtors = [(person, -balance) for person, balance in balance_by_person.items() if balance < 0]
-        creditors = [(person, balance) for person, balance in balance_by_person.items() if balance > 0]
-        
-        # Calcular pagamentos
+        # Converter payments para objetos Split
         splits = []
-        for debtor_name, amount_owed in debtors:
-            for i, (creditor_name, amount_to_receive) in enumerate(creditors):
-                if amount_owed == 0:
-                    break
-                payment_amount = min(amount_owed, amount_to_receive)
-                if payment_amount > 0:
-                    splits.append(Split(
-                        id=None,
-                        debtor=debtor_name,
-                        creditor=creditor_name,
-                        amount=payment_amount,
-                        month=month,
-                        year=year
-                    ))
-                    creditors[i] = (creditor_name, amount_to_receive - payment_amount)
-                    amount_owed -= payment_amount
+        for debtor, creditor, amount in calculation.payments:
+            splits.append(Split(
+                id=None,
+                debtor=debtor,
+                creditor=creditor,
+                amount=amount,
+                month=month,
+                year=year
+            ))
         
         return splits
     
