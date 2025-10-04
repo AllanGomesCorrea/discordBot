@@ -8,6 +8,52 @@ from repositories.sqlite_expense_repository import SQLiteExpenseRepository
 from repositories.sqlite_split_repository import SQLiteSplitRepository
 from config import DATABASE_PATH, MAX_MESSAGE_HISTORY
 
+def parse_expense_line(line: str) -> Tuple[float, str, str] | None:
+    """
+    Parse uma linha de despesa no formato: - Valor;Descrição;Pessoa
+    
+    Args:
+        line: Linha de texto a ser parseada
+        
+    Returns:
+        Tupla (valor, descrição, pessoa) ou None se inválida
+    """
+    line = line.strip()
+    if not line.startswith('-'):
+        return None
+    
+    # Remove o '-' inicial e divide por ';'
+    parts = line[1:].split(';')
+    if len(parts) != 3:
+        return None
+    
+    try:
+        value_str, description, person = [part.strip() for part in parts]
+        value = float(value_str.replace(',', '.'))
+        return (value, description, person)
+    except (ValueError, IndexError):
+        return None
+
+def extract_expenses_from_message(message_content: str) -> List[Tuple[float, str, str]]:
+    """
+    Extrai despesas de uma mensagem, suportando tanto formato individual quanto múltiplas linhas.
+    
+    Args:
+        message_content: Conteúdo da mensagem
+        
+    Returns:
+        Lista de tuplas (valor, descrição, pessoa)
+    """
+    expenses = []
+    lines = message_content.split('\n')
+    
+    for line in lines:
+        expense = parse_expense_line(line)
+        if expense:
+            expenses.append(expense)
+    
+    return expenses
+
 @app_commands.command(name="save_monthly", description="Salva o resumo mensal no banco de dados.")
 async def save_monthly(interaction: discord.Interaction, month: int, year: int):
     """
@@ -36,13 +82,9 @@ async def save_monthly(interaction: discord.Interaction, month: int, year: int):
         expenses_data = []
         
         async for message in channel.history(limit=MAX_MESSAGE_HISTORY):
-            if message.content.startswith('-') and message.content.count(';') == 2:
-                try:
-                    value, description, person = [x.strip('- ').strip() for x in message.content.split(';')]
-                    value = float(value.replace(',', '.'))
-                    expenses_data.append((value, description, person))
-                except Exception:
-                    continue
+            # Extrair despesas da mensagem (suporta múltiplas linhas)
+            message_expenses = extract_expenses_from_message(message.content)
+            expenses_data.extend(message_expenses)
         
         if not expenses_data:
             await interaction.followup.send("Nenhum gasto encontrado no padrão esperado (- Valor;Descrição;Pessoa)", ephemeral=True)
