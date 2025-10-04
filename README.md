@@ -121,9 +121,28 @@ Para que o bot reconheça as despesas, use o formato:
 - 8.75;Café;Pedro
 ```
 
-### Comandos de Persistência
+**✨ Suporte a Múltiplas Linhas:**
+Agora você pode enviar várias despesas em uma única mensagem:
+```
+- 116,32;Internet Vencimento dia 10;Lan
+- 274;Academia Vencimento dia 10 e 20;Lan
+- 44,90;Netflix Vencimento dia 10;Lan
+```
 
-#### Salvar Dados Mensais
+### Comandos Disponíveis
+
+#### 📊 Resumo das Contas
+```
+/summary
+```
+**Novas funcionalidades:**
+- ✅ **Detecção de erros**: Identifica mensagens fora do padrão e mostra quais são
+- ✅ **Organização por pessoa**: Exibe despesas agrupadas por pessoa com totais individuais
+- ✅ **Resumo estatístico**: Mostra total geral, número de pessoas e média por pessoa
+- ✅ **Exportação Excel**: Botão para gerar arquivo .xlsx com todos os dados
+- ✅ **Tratamento de mensagens longas**: Se o resumo for muito extenso, oferece download do Excel
+
+#### 💾 Salvar Dados Mensais
 ```
 /save_monthly 12 2024
 ```
@@ -132,12 +151,20 @@ Para que o bot reconheça as despesas, use o formato:
 - Salva no banco SQLite
 - Sobrescreve dados existentes do mesmo mês/ano
 
-#### Carregar Dados Salvos
+#### 📂 Carregar Dados Salvos
 ```
 /load_monthly 12 2024
 ```
 - Carrega dados salvos do mês/ano especificado
 - Mostra resumo completo com splits
+
+#### 🧮 Cálculo de Divisão
+```
+/total_splited
+```
+- Mostra total por pessoa
+- Calcula quem deve para quem
+- Formato limpo e organizado
 
 ## Exemplo de Fluxo
 
